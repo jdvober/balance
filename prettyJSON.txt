@@ -1,0 +1,68 @@
+{
+  "unbalanced_formula": "Cr + O2 = Cr2O3",
+  "balanced_formula": "",
+  "coefficients": [
+    100
+  ],
+  "compounds": [
+    {
+      "formula": "Cr",
+      "coefficient": 0,
+      "elements": [
+        {
+          "symbol": "Cr",
+          "subscript": 1
+        }
+      ],
+      "index": [
+        0,
+        2
+      ],
+      "Reactant": true,
+      "Product": false
+    },
+    {
+      "formula": "O2",
+      "coefficient": 0,
+      "elements": [
+        {
+          "symbol": "O",
+          "subscript": 2
+        }
+      ],
+      "index": [
+        5,
+        7
+      ],
+      "Reactant": true,
+      "Product": false
+    },
+    {
+      "formula": "Cr2O3",
+      "coefficient": 0,
+      "elements": [
+        {
+          "symbol": "Cr",
+          "subscript": 2
+        },
+        {
+          "symbol": "O",
+          "subscript": 3
+        }
+      ],
+      "index": [
+        10,
+        15
+      ],
+      "Reactant": false,
+      "Product": true
+    }
+  ],
+  "reactants": [
+    "Cr",
+    "O2"
+  ],
+  "products": [
+    "Cr2O3"
+  ]
+}
