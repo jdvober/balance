@@ -157,7 +157,7 @@ func getSubscriptsInCompound(formula string) []float64 {
 	return subscripts
 }
 
-func (rxn *Reaction) calcComplexCoefficients() {
+func (rxn *Reaction) calcCoefficientsLeastSquares() {
 	cFormulas := make(map[string][]float64, len(rxn.UniqueElements))
 	totalNumberOfCompounds := len(rxn.Reactants) + len(rxn.Products)
 	matrixA := [][]float64{}
@@ -190,8 +190,8 @@ func (rxn *Reaction) calcComplexCoefficients() {
 		matrixB = append(matrixB, tempMatrixBRow)
 	}
 
-	/* printMatrix("A", matrixA)
-	 * printMatrix("B", matrixB) */
+	// printMatrix("A", matrixA)
+	// printMatrix("B", matrixB)
 
 	// Get my matrix data into a form that gonum can use.
 	aData := []float64{}
@@ -217,8 +217,8 @@ func (rxn *Reaction) calcComplexCoefficients() {
 
 	a := mat.NewDense(len(bData), len(bData), aData)
 	b := mat.NewDense(len(bData), 1, bData)
-	/* fmt.Printf("a:%v\n", a)
-	 * fmt.Printf("b:%v\n\n", b) */
+	// fmt.Printf("a:%v\n", a)
+	// fmt.Printf("b:%v\n\n", b)
 
 	// Compute the inverse of A.
 	var aInv mat.Dense
@@ -226,22 +226,7 @@ func (rxn *Reaction) calcComplexCoefficients() {
 	var x mat.Dense
 	if err != nil {
 		log.Println("A is not invertible.  Using alternate method to solve.  See log for details.")
-		/* log.Fatalf("A is not invertible: %v", err) */
-		/* } */
-		// Print the result using the formatter.
-		/* fa := mat.Formatted(&aInv, mat.Prefix("       "), mat.Squeeze())
-		 * fmt.Printf("aInv = %.2g\n\n", fa) */
-		// The Inverse operation, however, should typically be avoided. If the
-		// goal is to solve a linear system
-		//  A * X = B,
-		// then the inverse is not needed and computing the solution as
-		// X = A^{-1} * B is slower and has worse stability properties than
-		// solving the original problem. In this case, the SolveVec method of
-		// VecDense (if B is a vector) or Solve method of Dense (if B is a
-		// matrix) should be used instead of computing the Inverse of A.
 		var tempX mat.Dense
-		/* fmt.Println("[A] * [X] = [B] is a better, faster version of ")
-		 * fmt.Println("[X] = [A]^{-1} * [B]") */
 		err = tempX.Solve(a, b)
 		if err != nil {
 			log.Fatalf("no solution: %v", err)
@@ -251,10 +236,10 @@ func (rxn *Reaction) calcComplexCoefficients() {
 	} else {
 		x.Mul(&aInv, b)
 	}
-	/* Print the result using the formatter. */
-	/* fx := mat.Formatted(&x, mat.Prefix("    "), mat.Squeeze())
-	 * fmt.Printf("X = %.1f = {coefficient 1, coefficient 2}\n", fx)
-	 * fmt.Printf("\n%+v\n", x) */
+	// Print the result using the formatter.
+	fx := mat.Formatted(&x, mat.Prefix("    "), mat.Squeeze())
+	fmt.Printf("X = %.1f = {coefficient 1, coefficient 2}\n", fx)
+	fmt.Printf("\n%+v\n", x)
 
 	// Get all the coefficients but the last one
 	coefficients := x.RawMatrix().Data
@@ -435,7 +420,7 @@ func main() {
 		/* UnbalancedFormula: "Na2CO3 + CO2 + H2O = NaHCO3", // Gives dimension mismatch, Elements:4, Compounds: 4 */
 	}
 	reaction.getCompoundDetails()
-	reaction.calcComplexCoefficients()
+	reaction.calcCoefficientsLeastSquares()
 	reaction.calcSimplifiedCoefficients()
 	/* reaction.createBalancedRxn() */
 	fmt.Printf("%s\n", prettify(reaction))
