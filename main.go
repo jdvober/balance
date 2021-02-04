@@ -163,20 +163,16 @@ func (rxn *Reaction) calcComplexCoefficients() {
 	matrixA := [][]float64{}
 	matrixB := [][]float64{}
 
-	for _, s := range rxn.UniqueElements {
-		/* row := []float64{1, 1, 2, 3} */
-		row := rxn.getUniqueMatrixRow(s)
+	for _, symbol := range rxn.UniqueElements {
+		row := rxn.getUniqueMatrixRow(symbol)
 
 		for i := range row {
 			// If between len(rxn.Reactants) and totalNumberOfCompounds, switch the sign. (Like moving to other side of equation)
-			if i > len(rxn.Reactants)-1 && i < totalNumberOfCompounds-1 {
-				// Don't flip 0 to -0
-				if row[i] != 0 {
-					row[i] = row[i] * -1
-				}
+			if i > len(rxn.Reactants)-1 && i < totalNumberOfCompounds-1 && row[i] != 0 { // Don't flip 0 to -0
+				row[i] = row[i] * -1
 			}
 		}
-		cFormulas[s] = row
+		cFormulas[symbol] = row
 	}
 
 	// Fill out Matrices A and B by splitting cFormulas into [everything but last column] and [last column], respectively
@@ -211,25 +207,16 @@ func (rxn *Reaction) calcComplexCoefficients() {
 		}
 	}
 
-	/* fmt.Println(matrixA)
-	 * fmt.Println(matrixB)
-	 * fmt.Printf("aData:%v\n", aData)
-	 * fmt.Printf("bData:%v\n\n", bData) */
+	fmt.Println(matrixA)
+	fmt.Println(matrixB)
+	fmt.Printf("aData:%v\n", aData)
+	fmt.Printf("bData:%v\n\n", bData)
 
-	a := mat.NewDense(len(matrixA[0]), len(matrixA[0]), aData)
+	fmt.Printf("len(aData):%v\n", len(aData))
+	fmt.Printf("len(bData):%v\n\n", len(bData))
+
+	a := mat.NewDense(len(bData), len(bData), aData)
 	b := mat.NewDense(len(bData), 1, bData)
-	// Initialize a matrix A.
-	/*     a := mat.NewDense(3, 3, []float64{
-	 *         1, 0, 0,
-	 *         1, 0, -3,
-	 *         0, 1, -2,
-	 *     })
-	 *
-	 *     b := mat.NewDense(3, 1, []float64{
-	 *         1,
-	 *         0,
-	 *         0,
-	 *     }) */
 	/* fmt.Printf("a:%v\n", a)
 	 * fmt.Printf("b:%v\n\n", b) */
 
@@ -264,7 +251,7 @@ func (rxn *Reaction) calcComplexCoefficients() {
 	} else {
 		x.Mul(&aInv, b)
 	}
-	// Print the result using the formatter.
+	/* Print the result using the formatter. */
 	/* fx := mat.Formatted(&x, mat.Prefix("    "), mat.Squeeze())
 	 * fmt.Printf("X = %.1f = {coefficient 1, coefficient 2}\n", fx)
 	 * fmt.Printf("\n%+v\n", x) */
@@ -274,7 +261,11 @@ func (rxn *Reaction) calcComplexCoefficients() {
 
 	lastCoefficient := math.Round(mat.Det(a))
 	coefficients = append(coefficients, lastCoefficient)
-	fmt.Printf("Unsimplified Coefficients: %v\n", coefficients)
+
+	// Fix all signs to be positive
+	for j := range coefficients {
+		coefficients[j] = math.Abs(coefficients[j])
+	}
 	rxn.ComplexCoefficients = coefficients
 	for i := range rxn.Compounds {
 		rxn.Compounds[i].ComplexCoefficient = coefficients[i]
@@ -321,7 +312,7 @@ func (rxn *Reaction) calcSimplifiedCoefficients() {
 		for j := range numerators {
 			values = append(values, []float64{numerators[j], denominators[j]})
 		}
-		fmt.Println(values)
+		/* fmt.Println(values) */
 	}
 
 	gcf := numerators[0]
@@ -333,6 +324,7 @@ func (rxn *Reaction) calcSimplifiedCoefficients() {
 		numerators[b] = numerators[b] / gcf
 	}
 
+	numerators[len(numerators)-1] /= math.Abs(rxn.ComplexCoefficients[len(rxn.ComplexCoefficients)-1])
 	rxn.SimplifiedCoefficients = numerators
 }
 
@@ -431,13 +423,22 @@ func (rxn *Reaction) createBalancedRxn() {
 
 func main() {
 	reaction := Reaction{
-		/* UnbalancedFormula: "Cr + O2 = Cr2O3", */
-		UnbalancedFormula: "MgO + Fe = Mg + Fe2O3",
-		/* UnbalancedFormula: "NaHCO3 = Na2CO3 + CO2 + H2O", */
+		// Working
+		UnbalancedFormula: "Cr + O2 = Cr2O3", // Elements: 2, Compounds:3
+
+		/* UnbalancedFormula: "MgO + Fe = Fe2O3 + Mg", // Gives correct answer */
+		/* UnbalancedFormula: "MgO + Fe = Mg + Fe2O3", // Gives correct answer. */
+
+		// Not Working
+		// When #Elements >= #Compounds, there will be a dimension mismatch.  Perhaps use another method, or only solve by hand?
+		/* UnbalancedFormula: "NaHCO3 = Na2CO3 + CO2 + H2O", Gives dimension mismatch, Elements:4, Compounds: 4 */
+		/* UnbalancedFormula: "Na2CO3 + CO2 + H2O = NaHCO3", // Gives dimension mismatch, Elements:4, Compounds: 4 */
 	}
 	reaction.getCompoundDetails()
 	reaction.calcComplexCoefficients()
 	reaction.calcSimplifiedCoefficients()
-	reaction.createBalancedRxn()
+	/* reaction.createBalancedRxn() */
 	fmt.Printf("%s\n", prettify(reaction))
+	fmt.Printf("Complex Coefficients: %v\n", reaction.ComplexCoefficients)
+	fmt.Printf("Simplfied Coefficients: %v\n", reaction.SimplifiedCoefficients)
 }
